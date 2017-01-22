@@ -45,9 +45,7 @@
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="RCva3c">
-      <HintPath>lib\RCva3c.dll</HintPath>
-    </Reference>
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -58,8 +56,10 @@
       <HintPath>c:\Program Files\Rhinoceros 5 (64-bit)\System\rhinocommon.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Filewriter.cs" />
     <Compile Include="RhinoToJsonCommand.cs" />
     <Compile Include="RhinoToJsonPlugIn.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -71,6 +71,12 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\RCva3c\RCva3c\RCva3c\RCva3c.csproj">
+      <Project>{f36ba6b4-38b5-4477-9a20-b6bff3b8cf9b}</Project>
+      <Name>RCva3c</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

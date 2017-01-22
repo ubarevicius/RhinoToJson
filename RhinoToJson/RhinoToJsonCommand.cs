@@ -40,10 +40,24 @@ namespace RhinoToJson
             Result rc = RhinoGet.GetMultipleObjects("Select your scene objects",
                                                                 false, Rhino.DocObjects.ObjectType.AnyObject, out objrefs);
 
+            List<Element> allElements = new List<Element>();
+
            if(objrefs?.Length > 0)
             {
                 foreach(var obj in objrefs)
                 {
+                    var material = obj.Object().GetMaterial(true);
+                    var mesh = new va3c_Mesh();
+                    Mesh finalMesh = new Mesh();
+                    RCva3c.Material mat;
+                    if (material != null)
+                    {
+                         mat = new va3c_MeshPhongMaterial().GeneratePhongMaterial(material.DiffuseColor, material.AmbientColor, material.EmissionColor, material.SpecularColor, material.Shine, 1 - material.Transparency);
+                    }
+                    else
+                    {
+                        mat = new va3c_MeshBasicMaterial().GenerateMaterial(System.Drawing.Color.White, 1);
+                    }
 
                     switch (obj.Geometry().ObjectType)
                     {
@@ -56,12 +70,20 @@ namespace RhinoToJson
                         case ObjectType.Curve:
                             break;
                         case ObjectType.Surface:
+                            var srf = obj.Surface();
+                            var meshSrf = Mesh.CreateFromBrep(srf.ToBrep());
+                            if (meshSrf?.Length > 0)
+                            {
+                                foreach (var m in meshSrf)
+                                {
+                                    finalMesh.Append(m);
+                                }
+                            }
+                            allElements.Add(mesh.GenerateMeshElement(finalMesh, mat, new List<string> { ObjectType.Brep.ToString() }, new List<string> { ObjectType.Brep.ToString() }));
                             break;
                         case ObjectType.Brep:
-                            var mesh = new va3c_Mesh();
                             var brep = obj.Brep();
                             var meshBrep = Mesh.CreateFromBrep(brep);
-                            Mesh finalMesh = new Mesh();
                             if(meshBrep?.Length > 0)
                             {
                                 foreach(var m in meshBrep)
@@ -69,14 +91,11 @@ namespace RhinoToJson
                                     finalMesh.Append(m);
                                 }
                             }
-                            var mat = new RCva3c.Material("json", va3cMaterialType.Mesh);
-                            var geom = mesh.GenerateMeshElement(finalMesh, mat, new List<string> { "attrName" }, new List<string> { "attrValue" }) ;
-
-                            var scenecompiler = new va3c_SceneCompiler();
-                            string resultatas = scenecompiler.GenerateSceneJson(new List<Element>() { geom });
-                            RhinoApp.WriteLine("resultatas");
+                            allElements.Add(mesh.GenerateMeshElement(finalMesh, mat, new List<string> { ObjectType.Brep.ToString() }, new List<string> { ObjectType.Brep.ToString() }));
                             break;
                         case ObjectType.Mesh:
+                            var msh = obj.Mesh();
+                            allElements.Add(mesh.GenerateMeshElement(msh, mat, new List<string> { ObjectType.Brep.ToString() }, new List<string> { ObjectType.Brep.ToString() }));
                             break;
                         case ObjectType.Light:
                             break;
@@ -126,6 +145,10 @@ namespace RhinoToJson
                 }
             }
 
+            var scenecompiler = new va3c_SceneCompiler();
+            string resultatas = scenecompiler.GenerateSceneJson(allElements);
+            Filewriter writer = new Filewriter();
+            writer.SaveFileTo(new List<string> { resultatas });
             return Result.Success;
         }
     }
