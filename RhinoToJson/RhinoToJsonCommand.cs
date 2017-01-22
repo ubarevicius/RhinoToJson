@@ -5,6 +5,8 @@ using Rhino.Commands;
 using Rhino.Geometry;
 using Rhino.Input;
 using Rhino.Input.Custom;
+using Rhino.DocObjects;
+using RCva3c;
 
 namespace RhinoToJson
 {
@@ -32,40 +34,97 @@ namespace RhinoToJson
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
-            RhinoApp.WriteLine("The {0} command will add a line right now.", EnglishName);
+            RhinoApp.WriteLine("The {0} will construct JSON representation of your scene.", EnglishName);
 
-            Point3d pt0;
-            using (GetPoint getPointAction = new GetPoint())
+            Rhino.DocObjects.ObjRef[] objrefs;
+            Result rc = RhinoGet.GetMultipleObjects("Select your scene objects",
+                                                                false, Rhino.DocObjects.ObjectType.AnyObject, out objrefs);
+
+           if(objrefs?.Length > 0)
             {
-                getPointAction.SetCommandPrompt("Please select the start point");
-                if (getPointAction.Get() != GetResult.Point)
+                foreach(var obj in objrefs)
                 {
-                    RhinoApp.WriteLine("No start point was selected.");
-                    return getPointAction.CommandResult();
+
+                    switch (obj.Geometry().ObjectType)
+                    {
+                        case ObjectType.None:
+                            break;
+                        case ObjectType.Point:
+                            break;
+                        case ObjectType.PointSet:
+                            break;
+                        case ObjectType.Curve:
+                            break;
+                        case ObjectType.Surface:
+                            break;
+                        case ObjectType.Brep:
+                            var mesh = new va3c_Mesh();
+                            var brep = obj.Brep();
+                            var meshBrep = Mesh.CreateFromBrep(brep);
+                            Mesh finalMesh = new Mesh();
+                            if(meshBrep?.Length > 0)
+                            {
+                                foreach(var m in meshBrep)
+                                {
+                                    finalMesh.Append(m);
+                                }
+                            }
+                            var mat = new RCva3c.Material("json", va3cMaterialType.Mesh);
+                            var geom = mesh.GenerateMeshElement(finalMesh, mat, new List<string> { "attrName" }, new List<string> { "attrValue" }) ;
+
+                            var scenecompiler = new va3c_SceneCompiler();
+                            string resultatas = scenecompiler.GenerateSceneJson(new List<Element>() { geom });
+                            RhinoApp.WriteLine("resultatas");
+                            break;
+                        case ObjectType.Mesh:
+                            break;
+                        case ObjectType.Light:
+                            break;
+                        case ObjectType.Annotation:
+                            break;
+                        case ObjectType.InstanceDefinition:
+                            break;
+                        case ObjectType.InstanceReference:
+                            break;
+                        case ObjectType.TextDot:
+                            break;
+                        case ObjectType.Grip:
+                            break;
+                        case ObjectType.Detail:
+                            break;
+                        case ObjectType.Hatch:
+                            break;
+                        case ObjectType.MorphControl:
+                            break;
+                        case ObjectType.BrepLoop:
+                            break;
+                        case ObjectType.PolysrfFilter:
+                            break;
+                        case ObjectType.EdgeFilter:
+                            break;
+                        case ObjectType.PolyedgeFilter:
+                            break;
+                        case ObjectType.MeshVertex:
+                            break;
+                        case ObjectType.MeshEdge:
+                            break;
+                        case ObjectType.MeshFace:
+                            break;
+                        case ObjectType.Cage:
+                            break;
+                        case ObjectType.Phantom:
+                            break;
+                        case ObjectType.ClipPlane:
+                            break;
+                        case ObjectType.Extrusion:
+                            break;
+                        case ObjectType.AnyObject:
+                            break;
+                        default:
+                            break;
+                    }
                 }
-                pt0 = getPointAction.Point();
             }
-
-            Point3d pt1;
-            using (GetPoint getPointAction = new GetPoint())
-            {
-                getPointAction.SetCommandPrompt("Please select the end point");
-                getPointAction.SetBasePoint(pt0, true);
-                getPointAction.DynamicDraw +=
-                  (sender, e) => e.Display.DrawLine(pt0, e.CurrentPoint, System.Drawing.Color.DarkRed);
-                if (getPointAction.Get() != GetResult.Point)
-                {
-                    RhinoApp.WriteLine("No end point was selected.");
-                    return getPointAction.CommandResult();
-                }
-                pt1 = getPointAction.Point();
-            }
-
-            doc.Objects.AddLine(pt0, pt1);
-            doc.Views.Redraw();
-            RhinoApp.WriteLine("The {0} command added one line to the document.", EnglishName);
-
-            // ---
 
             return Result.Success;
         }
