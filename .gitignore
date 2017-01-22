@@ -10,3 +10,4 @@ bld/
 [Oo]bj/
 [Ll]og/
 /packages/Newtonsoft.Json.9.0.1
+/packages/Newtonsoft.Json.6.0.3
